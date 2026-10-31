@@ -12,7 +12,6 @@
   const mapGrid = document.getElementById("mapGrid");
   const routeStatus = document.getElementById("routeStatus");
   const tools = Array.from(document.querySelectorAll("[data-tool]"));
-  const cellsByKey = new Map();
   let activeTool = "flood";
   let focusRoute = "both";
   let fastPath = null;
@@ -39,11 +38,17 @@
   tools.forEach((button) => button.addEventListener("click", () => setTool(button.dataset.tool)));
 
   function applyTool(r, c) {
+    if (activeTool !== "depot" && activeTool !== "shelter" &&
+        (same(depot, depot, r, c) || same(shelter, shelter, r, c))) return;
     if (activeTool === "depot") {
       if (same(shelter, shelter, r, c)) return;
+      grid[r][c].blocked = false;
+      grid[r][c].flood = 0;
       depot.r = r; depot.c = c;
     } else if (activeTool === "shelter") {
       if (same(depot, depot, r, c)) return;
+      grid[r][c].blocked = false;
+      grid[r][c].flood = 0;
       shelter.r = r; shelter.c = c;
     } else if (activeTool === "flood") {
       grid[r][c].blocked = false;
@@ -129,6 +134,7 @@
   }
 
   function renderMap() {
+    mapGrid.replaceChildren();
     const fastSet = new Set(fastPath ? fastPath.path : []);
     const safeSet = new Set(safePath ? safePath.path : []);
     for (let r = 0; r < ROWS; r += 1) {
@@ -162,8 +168,6 @@
               : cell.flood
                 ? '<span class="tile-mark">' + cell.flood + '</span>'
                 : "";
-        button.addEventListener("click", () => applyTool(r, c));
-        cellsByKey.set(key, button);
         mapGrid.appendChild(button);
       }
     }
